@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GEO Studio 控制台</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='%231d4ed8'/%3E%3Ctext x='32' y='42' font-size='30' text-anchor='middle' fill='white' font-family='Arial'%3EG%3C/text%3E%3C/svg%3E">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; background: #f6f7f9; color: #111827; line-height: 1.6; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 20px 16px 48px; }
+  header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+  .brand h1 { font-size: 24px; font-weight: 800; letter-spacing: .5px; }
+  .brand p { font-size: 13px; color: #6b7280; }
+  .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  select, button, input, textarea { font: inherit; font-size: 14px; border-radius: 8px; border: 1px solid #d1d5db; background: #fff; padding: 8px 12px; }
+  select:focus, button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid #1d4ed8; outline-offset: 1px; }
+  button { cursor: pointer; }
+  button.primary { background: #1d4ed8; color: #fff; border-color: #1d4ed8; font-weight: 600; }
+  button.primary:hover { background: #1e40af; }
+  button.ghost:hover { background: #f3f4f6; }
+  button.danger { background: #fff; color: #dc2626; border-color: #fecaca; }
+  button.danger:hover { background: #fef2f2; }
+  a.link { color: #1d4ed8; text-decoration: none; font-size: 14px; font-weight: 600; }
+  a.link:hover { text-decoration: underline; }
+  .conn { background: #fef3c7; border: 1px solid #fde68a; color: #92400e; padding: 10px 14px; border-radius: 8px; margin-bottom: 14px; font-size: 13.5px; display: none; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 14px; border-bottom: 1px solid #e5e7eb; flex-wrap: wrap; }
+  .tab { padding: 8px 16px; font-size: 14.5px; font-weight: 600; color: #6b7280; border: 0; background: none; border-radius: 8px 8px 0 0; }
+  .tab.active { color: #1d4ed8; border-bottom: 3px solid #1d4ed8; background: #eff6ff; }
+  .tab:not(.active):hover { color: #374151; background: #f3f4f6; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px 18px; margin-bottom: 12px; }
+  .card h2 { font-size: 15px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .card h2 .tag { font-size: 12px; font-weight: 500; color: #6b7280; background: #f3f4f6; border-radius: 999px; padding: 2px 10px; }
+  .hint { font-size: 12.5px; color: #6b7280; margin-bottom: 8px; }
+  .f { margin-bottom: 10px; }
+  .f label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 4px; }
+  .f input, .f textarea, .f select { width: 100%; }
+  .f .sub { font-size: 12px; color: #9ca3af; font-weight: 400; margin-left: 6px; }
+  .f-row { display: flex; flex-wrap: wrap; gap: 10px; }
+  .f-row .f { flex: 1; min-width: 150px; }
+  .checks { display: flex; flex-wrap: wrap; gap: 8px; }
+  .checks label { display: inline-flex; align-items: center; gap: 5px; font-weight: 500; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+  .checks input { width: auto; }
+  .ops { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+  .tbl-wrap { overflow-x: auto; }
+  table.fixed { table-layout: fixed; width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.fixed th, table.fixed td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #eef0f3; word-break: break-all; }
+  table.fixed th { background: #f8fafc; font-weight: 600; color: #374151; }
+  .st { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 999px; font-weight: 600; }
+  .st.active { background: #ecfdf5; color: #059669; }
+  .st.error { background: #fef2f2; color: #dc2626; }
+  .st.done, .st.success { background: #eff6ff; color: #1d4ed8; }
+  .st.pending { background: #fffbeb; color: #d97706; }
+  .st.idle { background: #f3f4f6; color: #6b7280; }
+  button.mini, select.mini { padding: 3px 8px; font-size: 12px; border-radius: 6px; width: auto; }
+  #probeBox { margin-top: 10px; }
+  #probeBox .pr { font-size: 12.5px; padding: 5px 0; }
+  .pr.ok { color: #059669; } .pr.bad { color: #dc2626; }
+  .cfg-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13.5px; }
+  .cfg-line input { width: 80px; }
+  .empty { color: #9ca3af; font-size: 13px; padding: 18px 0; text-align: center; border: 1px dashed #e5e7eb; border-radius: 8px; }
+  .b-list { list-style: none; }
+  .b-list li { display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 6px; cursor: pointer; }
+  .b-list li:hover { border-color: #93c5fd; background: #f8fafc; }
+  .b-list li.sel { border-color: #1d4ed8; background: #eff6ff; }
+  .b-list .nm { font-weight: 600; font-size: 14px; }
+  .b-list .dm { font-size: 12px; color: #6b7280; }
+  .alert-item { border-left: 3px solid #d97706; background: #fffbeb; padding: 10px 12px; border-radius: 0 8px 8px 0; margin-bottom: 8px; }
+  .alert-item.err { border-left-color: #dc2626; background: #fef2f2; }
+  .alert-item .t { font-size: 13.5px; font-weight: 600; }
+  .alert-item .m { font-size: 12.5px; color: #6b7280; margin-top: 2px; }
+  .mini-err { font-size: 12px; color: #dc2626; margin-top: 2px; }
+  .kw-tbl { margin-top: 4px; }
+  #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #111827; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 14px; opacity: 0; transition: opacity .25s; pointer-events: none; max-width: 86vw; }
+  #toast.show { opacity: 1; }
+  #toast.ok { background: #059669; } #toast.err { background: #dc2626; }
+  @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
+  @media (max-width: 760px) { input, textarea, select { font-size: 16px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1>GEO Studio 控制台</h1>
+      <p>管理品牌、采样与报告 —— 不需要懂命令行</p>
+    </div>
+    <div class="bar">
+      <select id="ctxBrand" aria-label="操作品牌"></select>
+      <a class="link" href="dashboard.html" target="_blank">打开看板 →</a>
+    </div>
+  </header>
+
+  <div id="conn" class="conn">无法连接 GEO Studio 服务。请确认服务已启动（uvicorn app.main:app --port 8000），然后刷新页面。如果是从文件直接打开的，请改用 http://127.0.0.1:8000/console 访问。</div>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="brands">品牌与词库</button>
+    <button class="tab" data-tab="tasks">采样任务</button>
+    <button class="tab" data-tab="reports">报告与优化</button>
+    <button class="tab" data-tab="alerts">告警</button>
+  </nav>
+
+  <!-- ===== Tab：品牌与词库 ===== -->
+  <section id="tab-brands">
+    <div class="grid2">
+      <div class="card"><h2>新建品牌 <span class="tag">自动建查询词 × 多引擎任务</span></h2>
+        <button class="ghost" id="demoFill" style="margin-bottom:10px">填入示例（瑞幸咖啡）</button>
+        <div class="f"><label>品牌名称 <span class="sub">客户品牌，如"瑞幸咖啡"</span></label>
+          <input id="fName" placeholder="必填"></div>
+        <div class="f"><label>别名 <span class="sub">逗号分隔，可选</span></label>
+          <input id="fAlias" placeholder="如：luckin, 瑞幸"></div>
+        <div class="f-row">
+          <div class="f"><label>品类词 <span class="sub">如"咖啡"，自动生成 6 条推荐类问题</span></label>
+            <input id="fCat" placeholder="留空则不建品类问题"></div>
+          <div class="f"><label>官网</label>
+            <input id="fDomain" placeholder="如 luckincoffee.com"></div>
+        </div>
+        <div class="f"><label>竞品品牌 <span class="sub">AI 推荐场景中的对照对象</span></label>
+          <div class="checks" id="fComp"></div></div>
+        <div class="f"><label>监控内容 URL <span class="sub">自媒体客户填公众号/小红书/B站链接，每行一个</span></label>
+          <textarea id="fMon" rows="2" placeholder="https://..."></textarea></div>
+        <div class="f"><label>监控引擎</label>
+          <div class="checks" id="fEng"></div></div>
+        <div class="f"><label>品牌场景词 <span class="sub">每行一个查询模板</span></label>
+          <textarea id="fScen" rows="3">是什么
+怎么样
+值得推荐吗
+价格怎么样
+和竞品比怎么样</textarea></div>
+        <div class="ops"><button class="primary" id="btnCreate">创建品牌</button></div>
+      </div>
+
+      <div class="card"><h2>已有品牌</h2>
+        <ul class="b-list" id="brandList"><li class="empty">加载中…</li></ul>
+      </div>
+    </div>
+
+    <div class="card"><h2 id="detailTitle">品牌详情 <span class="tag">点击左侧品牌查看</span></h2>
+      <div id="detailBox"><div class="empty">请先选择或创建一个品牌</div></div>
+    </div>
+  </section>
+
+  <!-- ===== Tab：采样任务 ===== -->
+  <section id="tab-tasks" style="display:none">
+    <div class="card"><h2>采样操作 <span class="tag">在各 AI 引擎上真实提问</span></h2>
+      <p class="hint">采样需要几分钟，完成后去看板看结果。出错任务可重跑（未登录/限流引擎最常见）。</p>
+      <div class="ops">
+        <button class="primary" data-act="all">采样全部品牌</button>
+        <button data-act="brand">采样当前品牌</button>
+        <button data-act="retry">重跑出错任务</button>
+      </div>
+      <div class="hint" style="margin-top:12px">引擎登录引导：未登录/限流的引擎先登录一次，弹窗里完成登录/验证码后关闭窗口（cookie 自动保存）：</div>
+      <div class="ops">
+        <button data-login="wenxin">登录文心</button>
+        <button data-login="kimi">登录 Kimi</button>
+        <button data-login="doubao">登录豆包</button>
+        <button data-login="yuanbao">登录元宝</button>
+        <button data-probe="1">探测全部引擎可用性（约 1 分钟）</button>
+      </div>
+      <div id="probeBox"></div>
+    </div>
+    <div class="card"><h2>任务列表 <span class="tag">共 <b id="taskTotal">0</b> 条</span></h2>
+      <div class="f-row">
+        <div class="f" style="max-width:160px"><label>引擎</label><select id="fltEng"><option value="">全部</option></select></div>
+        <div class="f" style="max-width:160px"><label>状态</label><select id="fltSt"><option value="">全部</option><option value="active">启用</option><option value="error">出错</option><option value="done">已完成</option></select></div>
+      </div>
+      <div id="taskBox"><div class="empty">加载中…</div></div>
+    </div>
+  </section>
+
+  <!-- ===== Tab：报告与优化 ===== -->
+  <section id="tab-reports" style="display:none">
+    <div class="grid2">
+      <div class="card"><h2>一键生成 <span class="tag">针对当前品牌</span></h2>
+        <p class="hint">生成的文件在 reports/品牌名/ 目录，可直接转发给客户。</p>
+        <div class="ops">
+          <button class="primary" data-act="weekly">生成周报</button>
+          <button data-act="engine">生成跨引擎报告</button>
+          <button data-act="brief">生成内容 Brief</button>
+          <button data-act="checkidx">检查 AI 收录</button>
+          <button data-act="export">导出引用明细 CSV</button>
+        </div>
+      </div>
+      <div class="card"><h2>使用提示</h2>
+        <ul style="font-size:13.5px;color:#374151;padding-left:18px">
+          <li>周报 / 跨引擎报告：给客户看的交付件，浏览器打开即可。</li>
+          <li>内容 Brief：根据答案缺口生成选题、FAQ 与结构化清单，交给内容团队。</li>
+          <li>检查 AI 收录：对你的内容 URL 逐个问 AI，确认是否已被索引（RAG）。</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card"><h2>历史报告</h2>
+      <div id="repBox"><div class="empty">加载中…</div></div>
+    </div>
+  </section>
+
+  <!-- ===== Tab：告警 ===== -->
+  <section id="tab-alerts" style="display:none">
+    <div class="card"><h2>告警阈值 <span class="tag">按当前品牌设置</span></h2>
+      <div class="cfg-line">
+        <span>负面提及达到</span><input id="aNeg" type="number" min="0" value="1"><span>条时告警；</span>
+        <span>可见度下降超过</span><input id="aDrop" type="number" min="0" max="100" value="20"><span>% 时告警</span>
+        <button class="primary" id="btnAlertCfg" style="white-space:nowrap">保存阈值</button>
+      </div>
+      <div class="hint" style="margin-top:6px">告警会写入下方列表（配置了飞书 webhook 也会推送到群）。</div>
+    </div>
+    <div class="card"><h2>告警中心 <span class="tag">负面提及 / 可见度骤降</span></h2>
+      <div class="ops" style="margin-bottom:10px">
+        <button data-act="alertscan">立即扫描告警</button>
+        <button data-act="alertflt" id="btnUnres">只看未解决</button>
+      </div>
+      <div id="alertBox"><div class="empty">加载中…</div></div>
+    </div>
+  </section>
+
+  <div class="foot" style="font-size:12px;color:#9ca3af;margin-top:16px">GEO Studio 控制台 · 所有操作写入本机数据库 data/geo.db；采样真实调用各 AI 引擎网页版。</div>
+</div>
+<div id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+  var API_BASE = (location.protocol === 'file:') ? 'http://127.0.0.1:8000' : '';
+  var state = { brands: [], current: null, tasks: [], alerts: [], unResOnly: false, tasksLoaded: false };
+  var ENGINES = ['wenxin', 'kimi', 'doubao', 'yuanbao'];
+  var $ = function (id) { return document.getElementById(id); };
+
+  function toast(msg, type) {
+    var t = $('toast');
+    t.textContent = msg;
+    t.className = type ? 'show ' + type : 'show';
+    clearTimeout(t._h);
+    t._h = setTimeout(function () { t.className = ''; }, 3600);
+  }
+
+  function api(path, opts) {
+    return fetch(API_BASE + path, opts || {}).then(function (r) {
+      return r.json().then(function (j) {
+        if (!r.ok) { throw new Error(j.detail || ('请求失败 ' + r.status)); }
+        return j;
+      });
+    });
+  }
+
+  // ---- Tab ----
+  document.querySelectorAll('.tab').forEach(function (t) {
+    t.addEventListener('click', function () {
+      document.querySelectorAll('.tab').forEach(function (x) { x.classList.remove('active'); });
+      t.classList.add('active');
+      document.querySelectorAll('section[id^=tab-]').forEach(function (s) { s.style.display = 'none'; });
+      $('tab-' + t.getAttribute('data-tab')).style.display = 'block';
+      if (t.getAttribute('data-tab') === 'tasks' && !state.tasksLoaded) { loadTasks(); state.tasksLoaded = true; }
+      if (t.getAttribute('data-tab') === 'reports') { loadReports(); }
+      if (t.getAttribute('data-tab') === 'alerts') { loadAlerts(); }
+    });
+  });
+
+  // ---- 品牌上下文 ----
+  function setContext() {
+    var v = Number($('ctxBrand').value);
+    state.current = state.brands.find(function (b) { return b.id === v; }) || null;
+    renderBrandList();
+    renderDetail();
+    loadAlertCfg();
+  }
+
+  function loadBrands() {
+    return api('/api/brands').then(function (list) {
+      state.brands = (list || []).slice().sort(function (a, b) { return b.id - a.id; });
+      var sel = $('ctxBrand');
+      sel.innerHTML = '<option value="">未选择品牌</option>';
+      state.brands.forEach(function (b) {
+        var o = document.createElement('option'); o.value = b.id; o.textContent = b.name; sel.appendChild(o);
+      });
+      if (state.current && state.brands.some(function (b) { return b.id === state.current.id; })) {
+        sel.value = String(state.current.id);
+      } else if (state.brands.length) { sel.value = String(state.brands[0].id); }
+      setContext();
+      renderCompChecks();
+      renderEngChecks();
+    });
+  }
+
+  function renderBrandList() {
+    var box = $('brandList');
+    if (!state.brands.length) { box.innerHTML = '<li class="empty">暂无品牌，用左侧表单创建一个</li>'; return; }
+    box.innerHTML = state.brands.map(function (b) {
+      return '<li class="' + (state.current && b.id === state.current.id ? 'sel' : '') + '" data-id="' + b.id + '">' +
+        '<span><span class="nm">' + b.name + '</span><br><span class="dm">' + (b.official_domain || '未填官网') + '</span></span>' +
+        '</li>';
+    }).join('');
+    box.querySelectorAll('li[data-id]').forEach(function (li) {
+      li.addEventListener('click', function () {
+        $('ctxBrand').value = li.getAttribute('data-id');
+        setContext();
+      });
+    });
+  }
+
+  function renderCompChecks() {
+    var box = $('fComp');
+    if (!state.brands.length) { box.innerHTML = '<span class="hint">暂无其他品牌可选作竞品</span>'; return; }
+    box.innerHTML = state.brands.map(function (b) {
+      return '<label><input type="checkbox" value="' + b.id + '"> ' + b.name + '</label>';
+    }).join('');
+  }
+
+  function renderEngChecks() {
+    $('fEng').innerHTML = ENGINES.map(function (e) {
+      return '<label><input type="checkbox" value="' + e + '" checked> ' + e + '</label>';
+    }).join('');
+  }
+
+  function renderDetail() {
+    var title = $('detailTitle');
+    var box = $('detailBox');
+    if (!state.current) { title.innerHTML = '品牌详情'; box.innerHTML = '<div class="empty">请先选择或创建一个品牌</div>'; return; }
+    title.innerHTML = '品牌详情：' + state.current.name;
+    box.innerHTML = '<div class="empty">加载中…</div>';
+    api('/api/brands/' + state.current.id).then(function (d) {
+      var comps = (d.competitors || []).map(function (c) { return c.name; }).join('、') || '未配置';
+      var kws = d.keywords || [];
+      var rows = kws.map(function (k) {
+        return '<tr><td>' + k.id + '</td><td>' + k.query_text + '</td><td>' + (k.scenario || '-') + '</td></tr>';
+      }).join('');
+      box.innerHTML =
+        '<div class="hint">官网：' + (d.official_domain || '未填') + ' ｜ 竞品：' + comps + ' ｜ <a href="account.html" target="_blank" style="color:#059669;font-weight:600">打开账号视图 →</a></div>' +
+        '<div class="tbl-wrap"><table class="fixed kw-tbl"><colgroup><col style="width:8%"><col style="width:58%"><col style="width:34%"></colgroup>' +
+        '<thead><tr><th>ID</th><th>查询词</th><th>场景</th></tr></thead><tbody>' + (rows || '<tr><td colspan="3">暂无查询词</td></tr>') + '</tbody></table></div>' +
+        '<div style="margin-top:12px"><div class="hint">添加查询词（自动为当前全部引擎建任务）：</div>' +
+        '<div class="f-row"><div class="f"><input id="kwText" placeholder="如：瑞幸咖啡 新品"></div>' +
+        '<div class="f"><input id="kwScn" placeholder="场景（可选）"></div>' +
+        '<button class="primary" id="btnKw" style="white-space:nowrap">添加</button></div></div>' +
+        '<div style="margin-top:16px;border-top:1px solid #eef0f3;padding-top:12px">' +
+        '<div class="hint"><b>内容清单（账号 GEO）</b>：登记发布的内容 URL，系统监测被 AI 引用情况（哪篇、哪句话、收录时效）。平台可自动识别，发布时间用于计算收录时效。</div>' +
+        '<div class="tbl-wrap"><table class="fixed" id="ctTbl"><colgroup><col style="width:38%"><col style="width:13%"><col style="width:15%"><col style="width:12%"><col style="width:22%"></colgroup>' +
+        '<thead><tr><th>内容 URL</th><th>平台</th><th>发布时间</th><th>被引</th><th>操作</th></tr></thead>' +
+        '<tbody id="ctBody"><tr><td colspan="5" class="empty">加载中…</td></tr></tbody></table></div>' +
+        '<div class="f-row" style="margin-top:8px">' +
+        '<div class="f" style="flex:2"><input id="ctUrl" placeholder="内容 URL，如 https://mp.weixin.qq.com/s/... 或小红书笔记链接"></div>' +
+        '<div class="f"><select id="ctPlat"><option value="">自动识别</option><option>小红书</option><option>公众号</option><option>知乎</option><option>B站</option><option>抖音</option><option>微博</option><option>官网</option><option>其他</option></select></div>' +
+        '<div class="f"><input id="ctPub" type="date" title="发布时间（收录时效基准）"></div>' +
+        '<button class="primary" id="btnCtAdd" style="white-space:nowrap">添加内容</button></div></div>';
+      var b = $('btnKw');
+      if (b) b.addEventListener('click', addKeyword);
+      var cb = $('btnCtAdd');
+      if (cb) cb.addEventListener('click', addContentItem);
+      loadContentItems();
+    }).catch(function (e) { box.innerHTML = '<div class="empty">加载失败：' + e.message + '</div>'; });
+  }
+
+  // ---- 创建品牌 ----
+  function createBrand() {
+    var name = $('fName').value.trim();
+    if (!name) { toast('请填写品牌名称', 'err'); return; }
+    var comps = Array.prototype.slice.call(document.querySelectorAll('#fComp input:checked')).map(function (c) { return Number(c.value); });
+    var engs = Array.prototype.slice.call(document.querySelectorAll('#fEng input:checked')).map(function (c) { return c.value; });
+    var payload = {
+      name: name,
+      aliases: $('fAlias').value.split(/[,，]/).map(function (s) { return s.trim(); }).filter(Boolean),
+      industry: '',
+      category: $('fCat').value.trim(),
+      official_domain: $('fDomain').value.trim(),
+      competitor_ids: comps,
+      monitored_urls: $('fMon').value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean),
+      scenarios: $('fScen').value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean),
+      engines: engs.length ? engs : ['wenxin'],
+    };
+    var btn = $('btnCreate');
+    btn.disabled = true; btn.textContent = '创建中…';
+    api('/api/brands', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      .then(function (r) {
+        toast('创建成功：' + r.keywords_created + ' 个查询词、' + r.tasks_created + ' 个采样任务');
+        $('fName').value = '';
+        return loadBrands();
+      })
+      .catch(function (e) { toast('创建失败：' + e.message, 'err'); })
+      .finally(function () { btn.disabled = false; btn.textContent = '创建品牌'; });
+  }
+
+  function addKeyword() {
+    if (!state.current) { toast('请先选择品牌', 'err'); return; }
+    var q = $('kwText').value.trim();
+    if (!q) { toast('请填写查询词', 'err'); return; }
+    api('/api/brands/' + state.current.id + '/keywords', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query_text: q, scenario: $('kwScn').value.trim() })
+    }).then(function () { toast('查询词已添加'); renderDetail(); loadTasks(); })
+      .catch(function (e) { toast('添加失败：' + e.message, 'err'); });
+  }
+
+  // ---- 内容清单（账号 GEO）----
+  function loadContentItems() {
+    if (!state.current) { return; }
+    api('/api/account/content-items/' + state.current.id).then(function (items) {
+      var body = $('ctBody');
+      if (!body) { return; }
+      if (!items.length) { body.innerHTML = '<tr><td colspan="5" class="empty">还没有登记内容——自媒体客户请添加发布的文章/笔记 URL（之后登录引擎采样即可监测引用）</td></tr>'; return; }
+      body.innerHTML = items.map(function (c) {
+        var platOpts = ['', '小红书', '公众号', '知乎', 'B站', '抖音', '微博', '官网', '其他'].map(function (p) {
+          return '<option value="' + p + '"' + (c.platform === p ? ' selected' : '') + '>' + (p || '自动识别') + '</option>';
+        }).join('');
+        return '<tr><td>' + c.url + '</td>' +
+          '<td><select class="mini ct-plat" data-id="' + c.id + '">' + platOpts + '</select></td>' +
+          '<td><input type="date" class="ct-pub" data-id="' + c.id + '" value="' + (c.published_at ? c.published_at.slice(0, 10) : '') + '"></td>' +
+          '<td id="ctCnt' + c.id + '">-</td>' +
+          '<td><button class="mini ct-del" data-id="' + c.id + '">删除</button></td></tr>';
+      }).join('');
+      // 顺带拉一次账号摘要填充被引次数
+      api('/api/account/summary/' + state.current.id).then(function (s) {
+        (s.items || []).forEach(function (it) {
+          var td = $('ctCnt' + it.id);
+          if (td) { td.innerHTML = '<b>' + it.citation_count + '</b>' + (it.duration && it.duration !== '-' ? '<div class="mini-err" style="color:#6b7280">收录 ' + it.duration + '</div>' : ''); }
+        });
+      }).catch(function () {});
+    }).catch(function () {});
+  }
+
+  function addContentItem() {
+    if (!state.current) { toast('请先选择品牌', 'err'); return; }
+    var url = $('ctUrl').value.trim();
+    if (!url) { toast('请填写内容 URL', 'err'); return; }
+    api('/api/account/content-items', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ brand_id: state.current.id, url: url, platform: $('ctPlat').value, published_at: $('ctPub').value })
+    }).then(function () { toast('内容已登记，采样后即可监测引用'); $('ctUrl').value = ''; $('ctPub').value = ''; loadContentItems(); })
+      .catch(function (e) { toast('添加失败：' + e.message, 'err'); });
+  }
+
+  function saveContentMeta(id, patch) {
+    api('/api/account/content-items/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) })
+      .then(function () { toast('已保存'); loadContentItems(); })
+      .catch(function (e) { toast('保存失败：' + e.message, 'err'); });
+  }
+
+  function delContentItem(id) {
+    if (!confirm('删除这条监控内容？引用历史会保留。')) { return; }
+    api('/api/account/content-items/' + id, { method: 'DELETE' })
+      .then(function () { toast('已删除'); loadContentItems(); })
+      .catch(function (e) { toast('删除失败：' + e.message, 'err'); });
+  }
+
+  function fillDemo() {
+    $('fName').value = '瑞幸咖啡';
+    $('fAlias').value = 'luckin, 瑞幸';
+    $('fCat').value = '咖啡';
+    $('fDomain').value = 'luckincoffee.com';
+    $('fMon').value = 'https://www.luckincoffee.com/\nhttps://www.luckincoffee.com/about';
+    var cs = document.querySelectorAll('#fComp input');
+    var names = ['星巴克中国', '库迪咖啡'];
+    cs.forEach(function (c) {
+      var b = state.brands.find(function (x) { return x.id === Number(c.value); });
+      c.checked = !!(b && names.indexOf(b.name) >= 0);
+    });
+    toast('示例已填入表单，检查后点"创建品牌"');
+  }
+
+  // ---- 采样任务 ----
+  function loadKwMap() {
+    state.kwMap = {};
+    return Promise.all(state.brands.map(function (b) {
+      return api('/api/brands/' + b.id).then(function (d) {
+        (d.keywords || []).forEach(function (k) { state.kwMap[k.id] = k.query_text; });
+      }).catch(function () {});
+    }));
+  }
+
+  function loadTasks() {
+    return api('/api/sampling/tasks').then(function (ts) {
+      state.tasks = ts || [];
+      $('taskTotal').textContent = state.tasks.length;
+      var engs = {};
+      state.tasks.forEach(function (t) { engs[t.engine] = 1; });
+      var sel = $('fltEng');
+      var cur = sel.value;
+      sel.innerHTML = '<option value="">全部</option>' + Object.keys(engs).map(function (e) { return '<option value="' + e + '">' + e + '</option>'; }).join('');
+      sel.value = cur;
+      renderTasks();
+    });
+  }
+
+  function renderTasks() {
+    var fe = $('fltEng').value, fs = $('fltSt').value;
+    var rows = state.tasks.filter(function (t) {
+      return (!fe || t.engine === fe) && (!fs || t.status === fs);
+    });
+    var box = $('taskBox');
+    if (!state.tasks.length) { box.innerHTML = '<div class="empty">暂无采样任务——先创建品牌</div>'; return; }
+    if (!rows.length) { box.innerHTML = '<div class="empty">没有符合条件的任务</div>'; return; }
+    box.innerHTML = '<div class="tbl-wrap"><table class="fixed"><colgroup><col style="width:5%"><col style="width:8%"><col style="width:28%"><col style="width:10%"><col style="width:27%"><col style="width:22%"></colgroup>' +
+      '<thead><tr><th>ID</th><th>引擎</th><th>查询词</th><th>状态</th><th>说明 / 错误</th><th>操作</th></tr></thead><tbody>' +
+      rows.map(function (t) {
+        var kw = state.kwMap ? state.kwMap[t.keyword_id] : '';
+        var freqOpts = [12, 24, 48, 72, 168].map(function (h) {
+          return '<option value="' + h + '"' + (t.frequency_hours === h ? ' selected' : '') + '>' + h + 'h</option>';
+        }).join('');
+        return '<tr><td>' + t.id + '</td><td>' + t.engine + '</td><td>' + (kw || '#' + t.keyword_id) + '</td>' +
+          '<td><span class="st ' + (t.status === 'active' ? 'active' : t.status === 'error' ? 'error' : t.status === 'done' ? 'done' : 'pending') + '">' + t.status + '</span></td>' +
+          '<td>' + (t.last_error ? '<div class="mini-err">' + (t.last_error.slice(0, 80)) + '</div>' : (t.last_run_at ? '上次 ' + t.last_run_at.slice(0, 16).replace('T', ' ') : '-')) + '</td>' +
+          '<td><button class="mini" data-tg="' + t.id + '" data-st="' + t.status + '">' + (t.status === 'paused' ? '启用' : '停用') + '</button> ' +
+          '<select class="mini" data-freq="' + t.id + '" title="采样频率">' + freqOpts + '</select></td></tr>';
+      }).join('') + '</tbody></table></div>';
+  }
+
+  function samplingAction(kind) {
+    var req, label;
+    if (kind === 'all') { req = api('/api/sampling/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }); label = '采样全部'; }
+    else if (kind === 'brand') {
+      if (!state.current) { toast('请先选择品牌', 'err'); return; }
+      req = api('/api/sampling/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ brand_id: state.current.id }) }); label = '采样 ' + state.current.name;
+    } else {
+      var errIds = state.tasks.filter(function (t) { return t.status === 'error'; }).map(function (t) { return t.id; });
+      if (!errIds.length) { toast('当前没有出错任务'); return; }
+      req = api('/api/sampling/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ task_ids: errIds }) }); label = '重跑 ' + errIds.length + ' 个出错任务';
+    }
+    req.then(function (r) { toast(label + ' 已提交：' + r.message, 'ok'); })
+      .catch(function (e) { toast('提交失败：' + e.message, 'err'); });
+  }
+
+  // ---- 报告 ----
+  function loadReports() {
+    api('/api/reports').then(function (rs) {
+      var box = $('repBox');
+      if (!rs || !rs.length) { box.innerHTML = '<div class="empty">暂无历史报告——在"一键生成"里生成</div>'; return; }
+      box.innerHTML = '<div class="tbl-wrap"><table class="fixed"><colgroup><col style="width:16%"><col style="width:16%"><col style="width:22%"><col style="width:46%"></colgroup>' +
+        '<thead><tr><th>品牌</th><th>区间</th><th>生成时间</th><th>说明</th></tr></thead><tbody>' +
+        rs.map(function (r) {
+          var bn = state.brands.find(function (b) { return b.id === r.brand_id; });
+          var openLink = r.path ? '<a href="#" data-open="' + r.path + '" style="color:#1d4ed8">打开</a>' : '-';
+          return '<tr><td>' + (bn ? bn.name : '#' + r.brand_id) + '</td><td>' + (r.period_start || '').slice(0, 10) + ' 至 ' + (r.period_end || '').slice(0, 10) + '</td><td>' + (r.created_at || '').slice(0, 16).replace('T', ' ') + '</td><td>' + openLink + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }).catch(function () { $('repBox').innerHTML = '<div class="empty">加载失败</div>'; });
+  }
+
+  function reportAction(kind) {
+    if (!state.current) { toast('请先在顶部选择品牌', 'err'); return; }
+    var id = state.current.id;
+    var req, label, isPost = true;
+    if (kind === 'weekly') { req = api('/api/reports/weekly/' + id, { method: 'POST' }); label = '周报'; }
+    else if (kind === 'engine') { req = api('/api/reports/engine/' + id, { method: 'POST' }); label = '跨引擎报告'; }
+    else if (kind === 'brief') { req = api('/api/content/brief/' + id); isPost = false; label = '内容 Brief'; }
+    else { req = api('/api/content/check-index/' + id + '?engine=wenxin', { method: 'POST' }); label = 'AI 收录检查'; }
+    req.then(function (r) {
+      if (kind === 'checkidx') {
+        var det = r.results || r;
+        toast('AI 收录检查完成：' + JSON.stringify(det).slice(0, 60), 'ok');
+      } else if (isPost) { toast(label + ' 已生成：' + r.path, 'ok'); }
+      else { toast(label + ' 已生成：' + r.path, 'ok'); }
+      loadReports();
+    }).catch(function (e) { toast(label + ' 失败：' + e.message, 'err'); });
+  }
+
+  // ---- 告警 ----
+  function loadAlerts() {
+    api('/api/alerts' + (state.unResOnly ? '?unresolved_only=true' : '')).then(function (as) {
+      state.alerts = as || [];
+      var box = $('alertBox');
+      if (!state.alerts.length) { box.innerHTML = '<div class="empty">' + (state.unResOnly ? '没有未解决的告警' : '暂无告警') + '</div>'; return; }
+      box.innerHTML = state.alerts.map(function (a) {
+        return '<div class="alert-item' + (a.severity === 'high' ? ' err' : '') + '"><div class="t">[' + a.type + '] ' + a.detail + '</div>' +
+          '<div class="m">' + (a.created_at || '').slice(0, 16).replace('T', ' ') + ' ｜ ' + (a.is_resolved ? '已解决' : '<a href="#" data-resolve="' + a.id + '" style="color:#1d4ed8">标记已解决</a>') + '</div></div>';
+      }).join('');
+      box.querySelectorAll('[data-resolve]').forEach(function (a) {
+        a.addEventListener('click', function (e) {
+          e.preventDefault();
+          api('/api/alerts/' + a.getAttribute('data-resolve') + '/resolve', { method: 'POST' })
+            .then(function () { toast('已标记解决', 'ok'); loadAlerts(); });
+        });
+      });
+    }).catch(function () { $('alertBox').innerHTML = '<div class="empty">加载失败</div>'; });
+  }
+
+  // ---- 新功能：登录引导 / 探活 / 任务启停 / 导出 / 阈值 / 打开报告 ----
+  function engineLogin(engine) {
+    api('/api/engines/login/' + engine, { method: 'POST' }).then(function (r) {
+      toast('已打开浏览器，请完成登录/验证码后关闭窗口', 'ok');
+    }).catch(function (e) { toast('打开失败：' + e.message, 'err'); });
+  }
+
+  function probeAll() {
+    var box = $('probeBox');
+    box.innerHTML = '<div class="pr">正在探测各引擎（每个约 15 秒，请稍候）…</div>';
+    api('/api/engines/probe', { method: 'POST' }).then(function (r) {
+      box.innerHTML = (r.results || []).map(function (p) {
+        return '<div class="pr ' + (p.ok ? 'ok' : 'bad') + '">' + p.engine + '：' + (p.ok ? '可用' : '不可用') + ' — ' + p.note + '</div>';
+      }).join('') || '<div class="pr">无结果</div>';
+    }).catch(function (e) {
+      box.innerHTML = '<div class="pr bad">探测失败：' + e.message + '</div>';
+    });
+  }
+
+  function toggleTask(id, cur) {
+    var next = cur === 'paused' ? 'active' : 'paused';
+    api('/api/sampling/tasks/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: next }) })
+      .then(function () { toast('任务 ' + id + ' 已' + (next === 'active' ? '启用' : '停用'), 'ok'); loadTasks(); })
+      .catch(function (e) { toast('操作失败：' + e.message, 'err'); });
+  }
+
+  function setFreq(id, h) {
+    api('/api/sampling/tasks/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ frequency_hours: h }) })
+      .then(function () { toast('任务 ' + id + ' 采样频率已改为每 ' + h + ' 小时', 'ok'); })
+      .catch(function (e) { toast('设置失败：' + e.message, 'err'); });
+  }
+
+  function loadAlertCfg() {
+    if (!state.current) { return; }
+    api('/api/brands/' + state.current.id).then(function (d) {
+      $('aNeg').value = d.alert_negative_threshold;
+      $('aDrop').value = Math.round((d.alert_visibility_drop || 0.2) * 100);
+    }).catch(function () {});
+  }
+
+  function saveAlertCfg() {
+    if (!state.current) { toast('请先选择品牌', 'err'); return; }
+    var neg = parseInt($('aNeg').value, 10);
+    var drop = parseFloat($('aDrop').value);
+    if (isNaN(neg) || neg < 0 || isNaN(drop)) { toast('阈值填写有误', 'err'); return; }
+    api('/api/brands/' + state.current.id + '/alerts', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ negative_threshold: neg, visibility_drop: drop / 100 })
+    }).then(function (r) { toast('阈值已保存（负面 ≥' + r.negative_threshold + ' 条 / 下降 ≥' + Math.round(r.visibility_drop * 100) + '%）', 'ok'); })
+      .catch(function (e) { toast('保存失败：' + e.message, 'err'); });
+  }
+
+  function exportCsv() {
+    if (!state.current) { toast('请先选择品牌', 'err'); return; }
+    window.open(API_BASE + '/api/export/citations/' + state.current.id);
+  }
+
+  function openReport(path) {
+    if (!path) { toast('该报告没有文件路径', 'err'); return; }
+    window.open('file:///' + path.replace(/\\/g, '/'));
+  }
+
+  // ---- 事件绑定 ----
+  $('ctxBrand').addEventListener('change', setContext);
+  $('btnCreate').addEventListener('click', createBrand);
+  $('demoFill').addEventListener('click', fillDemo);
+  $('fltEng').addEventListener('change', renderTasks);
+  $('fltSt').addEventListener('change', renderTasks);
+  document.querySelectorAll('#tab-tasks .ops button[data-act]').forEach(function (b) {
+    b.addEventListener('click', function () { samplingAction(b.getAttribute('data-act')); });
+  });
+  $('taskBox').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-tg]');
+    if (b) { toggleTask(Number(b.getAttribute('data-tg')), b.getAttribute('data-st')); }
+  });
+  $('taskBox').addEventListener('change', function (e) {
+    var s = e.target.closest('select[data-freq]');
+    if (s) { setFreq(Number(s.getAttribute('data-freq')), parseInt(s.value, 10)); }
+  });
+  document.querySelectorAll('button[data-login]').forEach(function (b) {
+    b.addEventListener('click', function () { engineLogin(b.getAttribute('data-login')); });
+  });
+  document.querySelector('button[data-probe]').addEventListener('click', probeAll);
+  document.querySelectorAll('#tab-reports .ops button[data-act]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var k = b.getAttribute('data-act');
+      if (k === 'export') { exportCsv(); } else { reportAction(k); }
+    });
+  });
+  $('repBox').addEventListener('click', function (e) {
+    var a = e.target.closest('a[data-open]');
+    if (a) { e.preventDefault(); openReport(a.getAttribute('data-open')); }
+  });
+  $('detailBox').addEventListener('change', function (e) {
+    var s = e.target.closest('select.ct-plat');
+    if (s) { saveContentMeta(Number(s.getAttribute('data-id')), { platform: s.value }); return; }
+    var d = e.target.closest('input.ct-pub');
+    if (d) { saveContentMeta(Number(d.getAttribute('data-id')), { published_at: d.value }); }
+  });
+  $('detailBox').addEventListener('click', function (e) {
+    var b = e.target.closest('button.ct-del');
+    if (b) { delContentItem(Number(b.getAttribute('data-id'))); }
+  });
+  $('btnAlertCfg').addEventListener('click', saveAlertCfg);
+  $('btnUnres').addEventListener('click', function () {
+    state.unResOnly = !state.unResOnly;
+    this.textContent = state.unResOnly ? '看全部告警' : '只看未解决';
+    loadAlerts();
+  });
+  document.querySelector('#tab-alerts [data-act="alertscan"]').addEventListener('click', function () {
+    api('/api/alerts/check', { method: 'POST' }).then(function (r) {
+      toast('扫描完成，新增 ' + r.created + ' 条告警', 'ok'); loadAlerts();
+    }).catch(function (e) { toast('扫描失败：' + e.message, 'err'); });
+  });
+
+  // ---- init ----
+  loadBrands().catch(function () { $('conn').style.display = 'block'; }).then(function () { return loadKwMap(); }).then(function () { if (state.tasksLoaded) renderTasks(); });
+})();
+</script>
+</body>
+</html>

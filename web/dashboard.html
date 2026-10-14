@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GEO Studio 看板</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='%231d4ed8'/%3E%3Ctext x='32' y='42' font-size='30' text-anchor='middle' fill='white' font-family='Arial'%3EG%3C/text%3E%3C/svg%3E">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; background: #f6f7f9; color: #111827; line-height: 1.6; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 20px 16px 48px; }
+  header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+  .brand h1 { font-size: 24px; font-weight: 800; letter-spacing: .5px; }
+  .brand p { font-size: 13px; color: #6b7280; }
+  .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  select, button { font: inherit; font-size: 14px; border-radius: 8px; border: 1px solid #d1d5db; background: #fff; padding: 8px 12px; cursor: pointer; }
+  select:focus, button:focus-visible { outline: 2px solid #1d4ed8; outline-offset: 1px; }
+  button.primary { background: #1d4ed8; color: #fff; border-color: #1d4ed8; font-weight: 600; }
+  button.primary:hover { background: #1e40af; }
+  button.ghost:hover { background: #f3f4f6; }
+  .conn { background: #fef3c7; border: 1px solid #fde68a; color: #92400e; padding: 10px 14px; border-radius: 8px; margin-bottom: 14px; font-size: 13.5px; display: none; }
+  .kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 14px; }
+  .kpi { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px 16px; }
+  .kpi .v { font-size: 30px; font-weight: 800; line-height: 1.2; }
+  .kpi .l { font-size: 13.5px; color: #6b7280; margin-top: 2px; }
+  .kpi .d { font-size: 12px; color: #9ca3af; margin-top: 2px; }
+  .kpi.good .v { color: #059669; } .kpi.bad .v { color: #dc2626; } .kpi.warn .v { color: #d97706; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px 18px; margin-bottom: 12px; }
+  .card h2 { font-size: 15px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .card h2 .tag { font-size: 12px; font-weight: 500; color: #6b7280; background: #f3f4f6; border-radius: 999px; padding: 2px 10px; }
+  .hint { font-size: 12.5px; color: #6b7280; margin-bottom: 8px; }
+  .chart { width: 100%; height: 300px; }
+  .empty { color: #9ca3af; font-size: 13px; padding: 18px 0; text-align: center; border: 1px dashed #e5e7eb; border-radius: 8px; }
+  .tbl-wrap { overflow-x: auto; }
+  table.fixed { table-layout: fixed; width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.fixed th, table.fixed td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #eef0f3; word-break: break-all; }
+  table.fixed th { background: #f8fafc; font-weight: 600; color: #374151; }
+  .gap-item { border-left: 3px solid #dc2626; background: #fef2f2; border-radius: 0 8px 8px 0; padding: 10px 12px; margin-bottom: 8px; }
+  .gap-item .q { font-weight: 600; font-size: 14px; }
+  .gap-item .m { font-size: 12.5px; color: #6b7280; margin-top: 3px; }
+  .chip { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 999px; margin-right: 6px; }
+  .chip.eng { background: #eff6ff; color: #1d4ed8; } .chip.comp { background: #f3f4f6; color: #374151; }
+  .auth-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+  .auth-item { font-size: 12.5px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px 10px; }
+  .auth-item.hit { border-color: #a7f3d0; background: #ecfdf5; }
+  .auth-item.miss { color: #6b7280; }
+  .ops { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+  .ops .btn-act { font-weight: 600; }
+  .ops .btn-act[data-act="sample"] { background: #1d4ed8; color: #fff; border-color: #1d4ed8; }
+  .ops .btn-act[data-act="weekly"] { background: #fff; }
+  .ops .btn-act[data-act="engine"] { background: #fff; }
+  .ops .btn-act[data-act="brief"] { background: #fff; }
+  .task-stats { display: flex; flex-wrap: wrap; gap: 18px; font-size: 13px; color: #374151; }
+  .task-stats b { font-size: 15px; }
+  .foot { font-size: 12px; color: #9ca3af; margin-top: 16px; }
+  #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #111827; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 14px; opacity: 0; transition: opacity .25s; pointer-events: none; max-width: 86vw; }
+  #toast.show { opacity: 1; }
+  #toast.ok { background: #059669; } #toast.err { background: #dc2626; }
+  @media (max-width: 900px) {
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .grid2 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 560px) { .kpis { grid-template-columns: 1fr 1fr; } .kpi .v { font-size: 24px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1>GEO Studio 看板</h1>
+      <p>品牌在 AI 引擎中的可见度、引用与答案缺口</p>
+    </div>
+    <div class="bar">
+      <select id="brandSel" aria-label="选择品牌"></select>
+      <button id="refreshBtn" class="ghost">刷新数据</button>
+    </div>
+  </header>
+
+  <div id="conn" class="conn">无法连接 GEO Studio 服务。请确认服务已启动（uvicorn app.main:app --reload，默认 127.0.0.1:8000），然后点"刷新数据"。如果是从文件直接打开的，请改用 http://127.0.0.1:8000/dashboard 访问。</div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="card"><h2>可见度趋势 <span class="tag">每轮采样记录一次，看涨跌</span></h2>
+    <div class="chart" id="chartTrend"></div></div>
+
+  <div class="grid2">
+    <div class="card"><h2>各引擎 AI 可见度 <span class="tag">同一品牌各 AI 的提及率</span></h2>
+      <div class="chart" id="chartEng"></div></div>
+    <div class="card"><h2>AI 引用 Top 域名 <span class="tag">回答里引了哪些网站</span></h2>
+      <div class="chart" id="chartDom"></div></div>
+  </div>
+
+  <div class="card"><h2>竞品对比 <span class="tag">你和竞品在 AI 里谁更可见</span></h2>
+    <div id="compareBox"><div class="empty">加载中…</div></div></div>
+
+  <div class="grid2">
+    <div class="card"><h2>答案缺口 <span class="tag">竞品在、你不在的查询</span></h2>
+      <div id="gapList"><div class="empty">加载中…</div></div></div>
+    <div class="card"><h2>权威度建设 <span class="tag">高权重域名引用占比</span></h2>
+      <div id="authBox"><div class="empty">加载中…</div></div></div>
+  </div>
+
+  <div class="card"><h2>内容引用追踪 <span class="tag">自媒体 / RAG</span></h2>
+    <div id="contentBox"><div class="empty">加载中…</div></div></div>
+
+  <div class="card"><h2>一键操作</h2>
+    <p class="hint">采样在各 AI 引擎上真实提问并解析引用，几分钟后点"刷新数据"查看结果。报告生成到 reports/ 目录。</p>
+    <div class="ops">
+      <button class="btn-act" data-act="sample">立即采样</button>
+      <button class="btn-act" data-act="weekly">生成周报</button>
+      <button class="btn-act" data-act="engine">生成跨引擎报告</button>
+      <button class="btn-act" data-act="brief">生成内容 Brief</button>
+    </div>
+  </div>
+
+  <div class="card"><h2>采样任务</h2>
+    <div id="taskBox"><div class="empty">加载中…</div></div></div>
+
+  <div class="foot">GEO Studio 看板 · 数据来自各 AI 引擎网页版真实采样，回答具有时效性。操作与查看均需本机服务运行。</div>
+</div>
+<div id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+  var state = { brands: [], current: null, charts: {} };
+  var $ = function (id) { return document.getElementById(id); };
+  var charts = { eng: null, dom: null };
+
+  function toast(msg, type) {
+    var t = $('toast');
+    t.textContent = msg;
+    t.className = type ? 'show ' + type : 'show';
+    clearTimeout(t._h);
+    t._h = setTimeout(function () { t.className = ''; }, 3200);
+  }
+
+  // API 基址：同源托管（/dashboard）用相对路径；file:// 直接打开时显式走本机服务（服务已开 CORS）
+  var API_BASE = (location.protocol === 'file:') ? 'http://127.0.0.1:8000' : '';
+
+  function api(path, opts) {
+    return fetch(API_BASE + path, opts || {}).then(function (r) {
+      if (!r.ok) { return r.json().then(function (j) { throw new Error(j.detail || ('请求失败 ' + r.status)); }); }
+      return r.json();
+    });
+  }
+
+  function connError() {
+    $('conn').style.display = 'block';
+    document.querySelectorAll('.kpi .v').forEach(function () {});
+  }
+
+  // ---- 品牌 ----
+  function loadBrands() {
+    return api('/api/brands').then(function (list) {
+      state.brands = (list || []).slice().sort(function (a, b) { return b.id - a.id; }); // 最新创建的排前，首屏展示有数据品牌
+      var sel = $('brandSel');
+      sel.innerHTML = '';
+      if (!state.brands.length) {
+        sel.innerHTML = '<option value="">暂无品牌（用 Swagger 创建）</option>';
+        return;
+      }
+      state.brands.forEach(function (b) {
+        var o = document.createElement('option');
+        o.value = b.id; o.textContent = b.name;
+        sel.appendChild(o);
+      });
+      var keep = state.current && state.brands.some(function (b) { return b.id === state.current.id; });
+      sel.value = keep ? String(state.current.id) : String(state.brands[0].id);
+      state.current = state.brands.find(function (b) { return b.id === Number(sel.value); });
+    });
+  }
+
+  // ---- 渲染 ----
+  function renderKpi(vis) {
+    var q = vis.total_queries || 0, m = vis.mentioned_queries || 0;
+    var sovTxt = (vis.sov === null || vis.sov === undefined) ? '数据不足' : (vis.sov * 100).toFixed(1) + '%';
+    var items = [
+      { v: (vis.visibility_rate * 100).toFixed(1) + '%', l: 'AI 可见度', d: m + '/' + q + ' 个查询被提及', cls: vis.visibility_rate > 0.5 ? 'good' : 'warn' },
+      { v: sovTxt, l: '引用份额 SOV', d: (vis.sov_insufficient ? '引用不足 5 条，暂不计算' : '自身域名引用 / 全部引用'), cls: vis.sov > 0.3 ? 'good' : '' },
+      { v: vis.total_citations, l: '引用总数', d: 'AI 回答中的引用链接' },
+      { v: vis.negative_mentions, l: '负面提及', d: '近 7 天回答中的负面语境', cls: vis.negative_mentions > 0 ? 'bad' : 'good' },
+      { v: m, l: '被提及查询数', d: '品牌名出现在 AI 回答里', cls: m > 0 ? 'good' : 'warn' }
+    ];
+    $('kpis').innerHTML = items.map(function (it) {
+      return '<div class="kpi ' + (it.cls || '') + '"><div class="v">' + it.v + '</div><div class="l">' + it.l + '</div><div class="d">' + it.d + '</div></div>';
+    }).join('');
+  }
+
+  function renderTrend(trendRes) {
+    var trend = trendRes.trend || [];
+    var div = $('chartTrend');
+    if (trend.length < 2) {
+      div.innerHTML = '<div class="empty">趋势需要至少两轮采样。每轮采样后自动记录，多看几轮就有曲线了。</div>';
+      return;
+    }
+    div.innerHTML = '';
+    if (!charts.trend) charts.trend = echarts.init(div);
+    var xs = trend.map(function (t) { return t.sampled_at.slice(5, 16).replace('T', ' '); });
+    var ys = trend.map(function (t) { return +(t.visibility_rate * 100).toFixed(1); });
+    charts.trend.setOption({
+      tooltip: { trigger: 'axis' },
+      grid: { left: 44, right: 20, top: 18, bottom: 26 },
+      xAxis: { type: 'category', data: xs, axisLabel: { fontSize: 11 } },
+      yAxis: { type: 'value', max: 100, axisLabel: { fontSize: 11, formatter: '{value}%' } },
+      series: [{ name: '可见度', type: 'line', data: ys, smooth: true,
+        itemStyle: { color: '#1d4ed8' }, lineStyle: { width: 2.5, color: '#1d4ed8' },
+        areaStyle: { opacity: 0.08, color: '#1d4ed8' },
+        label: { show: true, formatter: '{c}%', fontSize: 10, color: '#374151' } }]
+    });
+  }
+
+  function renderCompare(cmpRes) {
+    var items = (cmpRes.items || []).slice(0, 6);
+    var box = $('compareBox');
+    if (items.length < 2) {
+      box.innerHTML = '<div class="empty">需要至少两个品牌才能对比（当前品牌 + 竞品）。可在控制台创建品牌时设置竞品。</div>';
+      return;
+    }
+    var div = document.createElement('div');
+    div.className = 'chart';
+    div.style.height = Math.max(220, items.length * 56) + 'px';
+    box.innerHTML = '';
+    box.appendChild(div);
+    if (!charts.cmp) charts.cmp = echarts.init(div);
+    charts.cmp.setOption({
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+      grid: { left: 10, right: 44, top: 10, bottom: 20, containLabel: true },
+      xAxis: { type: 'value', max: 100, axisLabel: { fontSize: 11, formatter: '{value}%' } },
+      yAxis: { type: 'category', data: items.map(function (i) { return i.brand_name; }).reverse(), axisLabel: { fontSize: 12, fontWeight: 600 } },
+      series: [{
+        name: 'AI 可见度', type: 'bar',
+        data: items.map(function (i) { return +(i.visibility_rate * 100).toFixed(1); }).reverse(),
+        itemStyle: { borderRadius: [0, 4, 4, 0], color: function (p) {
+          var item = items[items.length - 1 - p.dataIndex];
+          return (item && state.current && item.brand_id === state.current.id) ? '#1d4ed8' : '#9ca3af';
+        } }, barMaxWidth: 22,
+        label: { show: true, position: 'right', formatter: '{c}%', fontSize: 11, color: '#374151' }
+      }]
+    });
+    var rows = items.map(function (i) {
+      return '<tr><td>' + i.brand_name + '</td><td>' + (i.visibility_rate * 100).toFixed(1) + '%</td>' +
+        '<td>' + (i.sov === null || i.sov === undefined ? '数据不足' : (i.sov * 100).toFixed(1) + '%') + '</td>' +
+        '<td>' + i.total_citations + '</td><td>' + i.negative_mentions + '</td></tr>';
+    }).join('');
+    box.insertAdjacentHTML('beforeend', '<div class="tbl-wrap" style="margin-top:8px"><table class="fixed"><colgroup><col style="width:26%"><col style="width:18%"><col style="width:20%"><col style="width:18%"><col style="width:18%"></colgroup>' +
+      '<thead><tr><th>品牌</th><th>AI 可见度</th><th>引用份额 SOV</th><th>引用总数</th><th>负面提及</th></tr></thead><tbody>' + rows + '</tbody></table></div>');
+  }
+
+  function renderEngines(vis) {
+    var eb = vis.engine_breakdown || [];
+    var div = $('chartEng');
+    if (!eb.length) { div.innerHTML = '<div class="empty">暂无采样数据——点"立即采样"开始</div>'; return; }
+    div.innerHTML = '';
+    if (!charts.eng) charts.eng = echarts.init(div);
+    charts.eng.setOption({
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+      grid: { left: 44, right: 16, top: 18, bottom: 26 },
+      xAxis: { type: 'category', data: eb.map(function (e) { return e.engine; }), axisLabel: { fontSize: 12 } },
+      yAxis: { type: 'value', max: 100, axisLabel: { fontSize: 11, formatter: '{value}%' } },
+      series: [{
+        name: '可见度', type: 'bar', data: eb.map(function (e) { return +(e.visibility_rate * 100).toFixed(1); }),
+        itemStyle: { color: '#1d4ed8', borderRadius: [4, 4, 0, 0] }, barMaxWidth: 44,
+        label: { show: true, position: 'top', formatter: '{c}%', fontSize: 11, color: '#374151' }
+      }]
+    });
+  }
+
+  function renderDomains(vis) {
+    var td = vis.top_cited_domains || [];
+    var div = $('chartDom');
+    if (!td.length) { div.innerHTML = '<div class="empty">暂无引用——AI 回答没给链接，或还没采样</div>'; return; }
+    div.innerHTML = '';
+    if (!charts.dom) charts.dom = echarts.init(div);
+    var rows = td.slice(0, 8);
+    charts.dom.setOption({
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+      grid: { left: 10, right: 44, top: 8, bottom: 20, containLabel: true },
+      xAxis: { type: 'value', minInterval: 1, axisLabel: { fontSize: 11 } },
+      yAxis: { type: 'category', data: rows.map(function (d) { return d.domain; }).reverse(), axisLabel: { fontSize: 11 } },
+      series: [{ name: '引用', type: 'bar', data: rows.map(function (d) { return d.count; }).reverse(),
+        itemStyle: { color: '#4b5563', borderRadius: [0, 4, 4, 0] }, barMaxWidth: 18 }]
+    });
+  }
+
+  function renderGaps(gapsRes) {
+    var gaps = gapsRes.gaps || [];
+    var by = gapsRes.by_engine || {};
+    var box = $('gapList');
+    if (!gaps.length) {
+      box.innerHTML = '<div class="empty">暂无缺口——竞品也没有出现在你的缺席位置，可先覆盖品类词或新品主题</div>';
+      return;
+    }
+    var engs = Object.keys(by).map(function (k) {
+      return '<span class="chip eng">' + k + ' × ' + by[k].count + '</span>';
+    }).join('');
+    var items = gaps.slice(0, 8).map(function (g) {
+      var comps = (g.competitors_present || []).slice(0, 3).map(function (c) { return '<span class="chip comp">' + c + '</span>'; }).join('');
+      return '<div class="gap-item"><div class="q">' + g.query_text + '</div><div class="m">' +
+        (g.scenario || '') + ' ｜ 引擎 ' + (g.engine || '-') + ' ｜ 竞品 ' + comps +
+        '</div><div class="m">' + (g.snippet || '').slice(0, 80) + '…</div></div>';
+    }).join('');
+    box.innerHTML = (engs ? '<div class="hint">按引擎：' + engs + '</div>' : '') + items;
+  }
+
+  function renderContent(cc) {
+    var box = $('contentBox');
+    var mon = cc.monitored_urls || [];
+    if (!mon.length) {
+      box.innerHTML = '<div class="empty">该品牌未配置内容监控 URL。自媒体客户建议在创建品牌时填 monitored_urls（公众号/小红书/B站链接）。</div>';
+      return;
+    }
+    var items = cc.items || [];
+    if (!items.length) {
+      box.innerHTML = '<div class="empty">已监控 ' + mon.length + ' 条内容，本期未被 AI 引用——内容可能还没被检索收录。</div>';
+      return;
+    }
+    var rows = items.map(function (it) {
+      return '<tr><td>' + it.url + '</td><td>' + it.count + '</td><td>' + (it.queries[0] || '-') + '</td><td>' + it.engines.join(', ') + '</td></tr>';
+    }).join('');
+    box.innerHTML = '<div class="tbl-wrap"><table class="fixed"><colgroup><col style="width:40%"><col style="width:10%"><col style="width:30%"><col style="width:20%"></colgroup>' +
+      '<thead><tr><th>内容 URL</th><th>引用次数</th><th>出现的问题</th><th>引擎</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
+
+  function renderAuth(au) {
+    var box = $('authBox');
+    var total = au.total_citations || 0;
+    var ratio = (au.authority_ratio * 100).toFixed(1);
+    var cited = au.cited_items || [];
+    var targets = au.targets || [];
+    var head = '<div class="kpi" style="margin-bottom:10px"><div class="v" style="font-size:24px">' + au.authority_citations + '/' + total +
+      '</div><div class="l">权威域引用（' + ratio + '%）</div><div class="d">百科/知乎/小红书/公众号/行业媒体被 AI 引用</div></div>';
+    var items = cited.map(function (d) {
+      return '<span class="auth-item hit">' + d.domain + ' · ' + d.count + '</span>';
+    }).join('');
+    var tgt = targets.slice(0, 6).map(function (t) {
+      return '<span class="auth-item miss">' + t.domain + '</span>';
+    }).join('');
+    box.innerHTML = head +
+      (items ? '<div class="hint">已被引用：</div><div class="auth-row">' + items + '</div>' : '<div class="hint">当前无权威域引用——下一步去这些平台建立内容/词条：</div>') +
+      (tgt ? '<div class="auth-row">' + tgt + '</div>' : '');
+  }
+
+  function renderTasks(tasks) {
+    var box = $('taskBox');
+    if (!tasks || !tasks.length) { box.innerHTML = '<div class="empty">暂无采样任务</div>'; return; }
+    var total = tasks.length;
+    var act = tasks.filter(function (t) { return t.status === 'active'; }).length;
+    var err = tasks.filter(function (t) { return t.status === 'error'; }).length;
+    box.innerHTML = '<div class="task-stats">' +
+      '<span>任务总数 <b>' + total + '</b></span>' +
+      '<span>启用 <b>' + act + '</b></span>' +
+      '<span>出错 <b style="color:' + (err ? '#dc2626' : '#059669') + '">' + err + '</b></span>' +
+      '</div><div class="hint" style="margin-top:8px">出错的通常是未登录/限流引擎，登录后重跑即可（详见 README）。</div>';
+  }
+
+  function loadAll() {
+    if (!state.current) { return; }
+    var id = state.current.id;
+    var compIds = (state.current.competitor_ids || []).slice(0, 5);
+    $('kpis').innerHTML = '<div class="empty" style="grid-column:1/-1">加载中…</div>';
+    Promise.all([
+      api('/api/analytics/visibility/' + id),
+      api('/api/analytics/gaps/' + id),
+      api('/api/analytics/content/' + id),
+      api('/api/content/authority/' + id),
+      api('/api/sampling/tasks').catch(function () { return []; }),
+      api('/api/analytics/trend/' + id).catch(function () { return { trend: [] }; }),
+      api('/api/analytics/compare?ids=' + [id].concat(compIds).join(',')).catch(function () { return { items: [] }; })
+    ]).then(function (rs) {
+      $('conn').style.display = 'none';
+      renderKpi(rs[0]); renderEngines(rs[0]); renderDomains(rs[0]);
+      renderGaps(rs[1]); renderContent(rs[2]); renderAuth(rs[3]); renderTasks(rs[4]);
+      renderTrend(rs[5]); renderCompare(rs[6]);
+    }).catch(function (e) {
+      $('conn').style.display = 'block';
+      toast('数据加载失败：' + e.message, 'err');
+    });
+  }
+
+  function switchBrand() {
+    var v = Number($('brandSel').value);
+    state.current = state.brands.find(function (b) { return b.id === v; }) || null;
+    loadAll();
+  }
+
+  // ---- 操作 ----
+  function act(kind) {
+    if (!state.current) { toast('请先创建品牌（Swagger → POST /api/brands）', 'err'); return; }
+    var id = state.current.id;
+    var actBtn = document.querySelector('.btn-act[data-act="' + kind + '"]');
+    actBtn.disabled = true; actBtn.textContent = '执行中…';
+    var req;
+    if (kind === 'sample') {
+      req = api('/api/sampling/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ brand_id: id }) });
+    } else if (kind === 'weekly') {
+      req = api('/api/reports/weekly/' + id, { method: 'POST' });
+    } else if (kind === 'engine') {
+      req = api('/api/reports/engine/' + id, { method: 'POST' });
+    } else {
+      req = api('/api/content/brief/' + id);
+    }
+    req.then(function (r) {
+      if (kind === 'sample') toast('采样已启动，正在各 AI 引擎提问，几分钟后点"刷新数据"查看');
+      else if (kind === 'weekly') toast('周报已生成：' + r.path);
+      else if (kind === 'engine') toast('跨引擎报告已生成：' + r.path);
+      else toast('内容 Brief 已生成：' + r.path);
+    }).catch(function (e) { toast('操作失败：' + e.message, 'err'); })
+      .finally(function () { actBtn.disabled = false; actBtn.textContent = { sample: '立即采样', weekly: '生成周报', engine: '生成跨引擎报告', brief: '生成内容 Brief' }[kind]; });
+  }
+
+  // ---- init ----
+  $('brandSel').addEventListener('change', switchBrand);
+  $('refreshBtn').addEventListener('click', function () { loadBrands().then(loadAll); });
+  document.querySelectorAll('.btn-act').forEach(function (b) {
+    b.addEventListener('click', function () { act(b.getAttribute('data-act')); });
+  });
+
+  loadBrands().then(loadAll).catch(function (e) {
+    $('conn').style.display = 'block';
+  });
+
+  window.addEventListener('resize', function () {
+    Object.keys(charts).forEach(function (k) { if (charts[k]) charts[k].resize(); });
+  });
+})();
+</script>
+</body>
+</html>
